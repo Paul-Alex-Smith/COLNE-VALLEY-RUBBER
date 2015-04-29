@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Design Bank - Contact Us</title>
+
+<link href='http://fonts.googleapis.com/css?family=Merriweather+Sans:400,700,800' rel='stylesheet' type='text/css'>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+     <link href="css/grid.css" rel="stylesheet">
+     <link href="css/nav.css" rel="stylesheet">
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script> 
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  
+
+<!--Connect to the google maps api using your api key or dont bothe PS-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+<!--Connect to the google maps api using your api key-->
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+
+<!--Connect to the infobox javascript library. This is used later to create the pop-up windows -->
+<script src="infobox/infobox.js" type="text/javascript"></script>
+
+<!--Main chunk of javascript that creates and controls the map.-->
+<script type="text/javascript">
+
+//Set up the custom styles for the map. I've created two styles so the map can switch between them depending on the zoom level. i.e. there is far less detail when the map is zoomed out.
+//First, we read in the data describing style.
+var style_festival = [
+ { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#ff9933" }, { "visibility": "simplified" }, { "invert_lightness": true } ] }
+];
+
+var style_festival_zoomed = [
+ { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#ff9933" }, { "visibility": "simplified" }, { "invert_lightness": true } ] }
+  ];
+
+//Then we use this data to create the styles. 
+var styled_festival = new google.maps.StyledMapType(style_festival, {name: "Festival style"});
+var styled_festival_zoomed = new google.maps.StyledMapType(style_festival_zoomed, {name: "Festival style zoomed"});
+
+//Create the variables that will be used within the map configuration options.
+//The latitude and longitude of the center of the map.
+var festivalMapCenter = new google.maps.LatLng(53.64899, -1.77637);
+//The degree to which the map is zoomed in. This can range from 0 (least zoomed) to 21 and above (most zoomed).
+var festivalMapZoom = 15;
+//The max and min zoom levels that are allowed.
+var festivalMapZoomMax = 20;
+var festivalMapZoomMin = 6;
+
+//These options configure the setup of the map. 
+var festivalMapOptions = { 
+		  center: festivalMapCenter, 
+          zoom: festivalMapZoom,
+		  maxZoom:festivalMapZoomMax,
+		  minZoom:festivalMapZoomMin,
+		  panControl: false,
+		  mapTypeControl: false,
+		   mapTypeControlOptions: {
+     		mapTypeIds: [ 'map_styles_festival', 'map_styles_festival_zoomed']
+   		 }
+};
+
+//Create the variable for the main map itself.
+var festivalMap;
+
+
+//Variable containing the style for the pop-up infobox.
+var pop_up_info = "border: 0px solid black; background-color: #ffffff; padding:15px; margin-top: 8px; border-radius:10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; box-shadow: 1px 1px #888;";
+
+
+//When the page loads, the line below calls the function below called 'loadFestivalMap' to load up the map.
+google.maps.event.addDomListener(window, 'load', loadFestivalMap);
+
+
+//THE MAIN FUNCTION THAT IS CALLED WHEN THE WEB PAGE LOADS--------------------------------------------------------------------------------
+function loadFestivalMap() {
+	
+//The empty map variable ('festivalMap') was created above. The line below creates the map, assigning it to this variable. The line below also loads the map into the div with the id 'festival-map' (see code within the 'body' tags below), and applies the 'festivalMapOptions' (above) to configure this map. 
+festivalMap = new google.maps.Map(document.getElementById("festival-map"), festivalMapOptions);	
+
+//Assigning the two map styles defined above to the map.
+festivalMap.mapTypes.set('map_styles_festival', styled_festival);
+festivalMap.mapTypes.set('map_styles_festival_zoomed', styled_festival_zoomed);
+//Setting the one of the styles to display as default as the map loads.
+festivalMap.setMapTypeId('map_styles_festival');
+
+
+//Continuously listens out for when the zoom level changes. This includs when the map zooms when a marker is clicked.
+google.maps.event.addListener(festivalMap, "zoom_changed", function() {
+	var newZoom = festivalMap.getZoom();
+	//If the map is zoomed in, the switch to the style that shows the higher level of detail.
+	if (newZoom > 6){
+		festivalMap.setMapTypeId('map_styles_festival_zoomed');
+			}
+	//Otherwise the map must be zoomed out, so use the style with the lower level of detail.
+	else {
+		festivalMap.setMapTypeId('map_styles_festival');
+	}
+
+});
+
+
+//Calls the function below to load up all the map markers and pop-up boxes.
+loadMapMarkers();
+
+}
+
+
+
+//Function that loads the map markers and the pop-up info boxes.
+function loadMapMarkers (){
+
+//Halifax preston -----------------
+
+//Setting the position of the Glastonbury map marker.
+var markerPositionHalifax = new google.maps.LatLng(53.64899, -1.77637);
+
+//Setting the icon to be used with the Glastonbury map marker.
+var markerIconHalifax = {
+  url: 'img/db-logo.jpg',
+  //The size image file.
+  size: new google.maps.Size(225, 120),
+  //The point on the image to measure the anchor from. 0, 0 is the top left.
+  origin: new google.maps.Point(0, 0),
+  //The x y coordinates of the anchor point on the marker. e.g. If your map marker was a drawing pin then the anchor would be the tip of the pin.
+  anchor: new google.maps.Point(25, 50)
+};
+
+//Setting the shape to be used with the Glastonbury map marker.
+var markerShapeHalifax = {
+      coord: [12,4,216,22,212,74,157,70,184,111,125,67,6,56],
+      type: 'poly'
+};
+
+//Creating the Glastonbury map marker.
+markerHalifax = new google.maps.Marker({
+      //uses the position set above.
+	  position: markerPositionHalifax,
+	  //adds the marker to the map.
+      map: festivalMap,
+      title: 'Halifax',
+	  //assigns the icon image set above to the marker.
+	  icon: markerIconHalifax,
+	  //assigns the icon shape set above to the marker.
+	  shape: markerShapeHalifax,
+	  //sets the z-index of the map marker.
+	  zIndex:107
+});
+
+//Creates the information to go in the pop-up info box.
+var boxTextHalifax = document.createElement("div");
+boxTextHalifax.style.cssText = pop_up_info;
+boxTextHalifax.innerHTML = '<span class="pop_up_box_text"><img src="img/map/design-bank.jpg" width="400" height="100" border="0" /></span><div class="left"><p><strong>The Design Bank,</strong></p><p>Headrow House,</p><p>19 Old Leeds Road,</p><p>Huddersfield</p><p>HD1 1SG</p></div><div class="right"><a href="http://maps.google.com/maps?client=safari&rls=en&q=the+design+bank&oe=UTF-8&um=1&ie=UTF-8&sa=N&hl=en&tab=wl" target="_blank">find us using google</a><br /><a href="https://www.google.com/maps/dir//The+Design+Bank+Ltd,+Old+Leeds+Rd,+Huddersfield,+West+Yorkshire+HD1+1SG,+United+Kingdom/@53.64915,-1.776379,17z/data=!4m13!1m4!3m3!1s0x487bdc129475016d:0xc097773e29b66768!2sThe+Design+Bank+Ltd!3b1!4m7!1m0!1m5!1m1!1s0x487bdc129475016d:0xc097773e29b66768!2m2!1d-1.776379!2d53.64915?hl=en" target="_blank" >Get Directions</a></div><div style="height:0px; clear:both">&nbsp;</div>';
+
+//Sets up the configuration options of the pop-up info box.                
+var infoboxOptionsHalifax = {
+                 content: boxTextHalifax
+                ,disableAutoPan: false
+                ,maxWidth: 0
+                ,pixelOffset: new google.maps.Size(-241, 0)
+                ,zIndex: null
+                ,boxStyle: { 
+                  background: "url('infobox/pop_up_box_top_arrow.png') no-repeat"
+                  ,opacity: 1
+                  ,width: "430px"
+                 }
+                ,closeBoxMargin: "10px 2px 2px 2px"
+                ,closeBoxURL: "infobox/button_close.png"
+                ,infoBoxClearance: new google.maps.Size(1, 1)
+                ,isHidden: false
+                ,pane: "floatPane"
+                ,enableEventPropagation: false
+};
+
+//Creates the pop-up infobox for Glastonbury, adding the configuration options set above.
+infoboxHalifax = new InfoBox(infoboxOptionsHalifax);
+
+//Add an 'event listener' to the Glastonbury map marker to listen out for when it is clicked.
+google.maps.event.addListener(markerHalifax, "click", function (e) {
+			//Open the Glastonbury info box.
+			infoboxHalifax.open(festivalMap, this);
+			//Changes the z-index property of the marker to make the marker appear on top of other markers.
+			this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+			//Zooms the map.
+			setZoomWhenMarkerClicked();
+			//Sets the Glastonbury marker to be the center of the map. 
+			festivalMap.setCenter(markerHalifax.getPosition());
+});
+
+
+
+//Function that zooms the map in (if has not been zoomed already) when a map marker is clicked.
+function setZoomWhenMarkerClicked(){
+var currentZoom = festivalMap.getZoom();
+	if (currentZoom < 7){
+			festivalMap.setZoom(7);
+	}
+}
+}
+</script>
+
+
+
+
+
+<style>
+    #a{
+    width: 195px;
+    height: 195px;
+        margin: 0px;
+        float: left;
+}
+#b{
+    width: 395px;
+    height: 395px;
+    margin: 0px auto;
+    background: red;
+    display: none;
+    position: absolute;
+    top:0px;
+    left:0px;
+
+}
+#a:hover #b{
+    display: block;
+}
+
+    #c{
+    width: 195px;
+    height: 195px;
+        margin: 0px;
+        float: left;
+}
+#d{
+    width: 395px;
+    height: 395px;
+    margin: 0px auto;
+    background: red;
+    display: none;
+    position: absolute;
+    top:0px;
+    left:0px;
+
+}
+#c:hover #d{
+    display: block;
+}
+
+
+  #festival-map { 
+	  	  width: 97%;
+        height: 550px;
+        padding:10px;
+	  }
+	  
+	  .pop_up_box_text {
+	 	  font-family: Georgia, 'Times New Roman', Times, serif; 
+		  font-size: 16px; 
+		  line-height: 22px; 
+		  color: #ffffff; 
+		  display: inline; 
+		  width:100px
+	  }
+	  .pop_up_box_text img, .infoBox img  {width:auto; height:auto}
+	  .infoBox p, .infoBox a {font-size:16px; margin:5px 0}
+	  .infoBox .left {width:50%;float:left}, infoBox .right {width:50%;float:left}
+	  h1 {font-size:40px}
+	  h2 {font-size:21px}
+	  @media only screen and (max-width: 768px) {
+	  .row {margin-left:0}}
+</style>
+
+  </head>
+  <body>
+  
+  <!--NAVBAR-->
+    <!-- Static navbar -->
+      <div class="navbar navbar-default" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img src="img/design-bank-logo.png"></a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+            <!--OURWORK-->
+              <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" >Our Work <b class="caret"></b></a>
+         <ul class="dropdown-menu">
+                  <li><a href="#">1st Our Work</a></li>
+                  <li><a href="#">2nd Our Work</a></li>
+                  <li><a href="#">3rd Our Work</a></li>
+                </ul>       
+              </li>
+              
+              <li><a href="contact.html">Contact Us</a></li>
+              <!--ENDOURWORK-->
+              
+              <!--DESIGN-->
+              <!--<li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">Design <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">1st Design</a></li>
+                  <li><a href="#">2nd Design</a></li>
+                  <li><a href="#">3rd Design</a></li>
+                </ul>       
+              </li>-->
+              <!--ENDDESIGN-->
+              
+              <!--ONLINE-->
+             <!-- <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">Online <b class="caret"></b></a>
+               <ul class="dropdown-menu">
+                  <li><a href="#">1st Online</a></li>
+                  <li><a href="#">2nd Online</a></li>
+                  <li><a href="#">3rd Online</a></li>
+                </ul>       
+              </li>-->
+              <!--ENDONLINE-->
+              
+              <!--SEO-->
+              <!--<li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">SEO <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">1st SEO</a></li>
+                  <li><a href="#">2nd SEO</a></li>
+                  <li><a href="#">3rd SEO</a></li>
+                </ul>
+              </li>-->
+              <!--ENDSEO-->
+              
+              <!--PR-->
+              <!--<li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">PR <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">1st PR</a></li>
+                  <li><a href="#">2nd PR</a></li>
+                  <li><a href="#">3rd PR</a></li>
+                </ul>
+              </li>-->
+              <!--PR-->
+              
+              <!--Advertising-->
+             <!-- <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Advertising <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">1st Advertising</a></li>
+                  <li><a href="#">2nd Advertising</a></li>
+                  <li><a href="#">3rd Advertising</a></li>
+                </ul>
+              </li>-->
+              <!--Advertising-->
+          
+              
+            </ul>
+            <!--<ul class="nav navbar-nav navbar-right">
+              <li class="active"><a href="./">Default</a></li>
+              <li><a href="../navbar-static-top/">Static top</a></li>
+              <li><a href="../navbar-fixed-top/">Fixed top</a></li>
+            </ul>-->
+          </div><!--/.nav-collapse -->
+        </div><!--/.container-fluid -->
+      </div>
+    <!--NAVBAR-->
+    
+    <div class="clear"></div>
+      
+   <div class="container">
+   <!--   <div class="row">
+      
+        <div class="col-xs-12 col-sm-12 col-lg-12"> 
+        <div class="infobox">       
+        <img src="img/home-page-virgin.jpg" alt="home-page-virgin">
+        
+        </div>
+       
+col-xs-6 col-sm-6 col-lg-6
+        <img src="../../img/virgin-project/montage-2.jpg" alt="montage-2" width="200" height="200" class="test box1" >
+        </div>-->
+        
+        
+          <div class="row top">    
+        
+         <div class="col-lg-6 col-sm-6 col-xs-12" >
+ 
+ 
+
+       
+                  </div>
+        
+         </div>
+        
+        
+   <div class="row">
+<div class="col-lg-6 col-sm-6 col-xs-12 ">
+	<!--ppp-->   
+	
+      <h1>general contact info</h1>
+
+        <h2 class="contact-text"> <span class="orange">t:</span> 01484 455 554<br />
+          <span class="orange">f:</span> 01484 455 558<br />
+          <span class="orange">e:</span> <a href="mailto:info@thedesignbank.co.uk">info@thedesignbank.co.uk</a> </h2>
+
+      <hr />
+      <h1>address:</h1>
+
+        <h2> The Design Bank<br />
+          Headrow House,<br />
+         19 Old Leeds Road,<br />
+          Huddersfield<br />
+          HD1 1SG </h2>
+      
+        <p> registered in England and Wales<br />
+          company number: 4662754 </p>
+
+    
+      <hr />
+      
+    
+    <!-- contact mid -->
+ 
+      <h1>get a quote</h1>
+      
+        <form action="php-form/form.php4" method="POST" name="Subscribe">     
+        <input type="hidden" name="required" value="name,tel">                                                        
+		<input type="hidden" name="subject" value="Design Bank Call Back">
+            
+            <div class="left-label-orange">your name</div><div class="clear"></div>
+            <div class="left"><input name="name" class="field-text" style="font-size:16px" size="24" type="text" /></div>
+            
+            <div class="clear" style="height:10px;"></div>
+            
+            <div class="left-label-orange">contact number</div><div class="clear"></div>
+            <div class="left"><input name="tel" class="field-text" style="font-size:16px" size="24" type="text" /></div>
+            
+			<div class="clear" style="height:10px;"></div>
+            
+            <div class="left-label-orange">message</div>
+         	<div class="clear" style="height:5px;"></div>
+            
+          
+			<textarea name="message" cols="22" rows="5" style="font-size:16px" class="field-text"></textarea>
+			
+            
+            <div class="clear" style="height:10px;"></div>
+            
+           
+
+            <div class="left"><input type="submit" value="Get a Quote" /></div>
+            
+      </form>
+
+	   </p>
+	   
+</div>
+
+<div class="col-lg-6 col-sm-6 col-xs-12 ">
+ 
+ <!-- contact left -->
+
+      <h1>finding us </h1>
+      
+      <div id="festival-map"></div>  
+      
+      
+
+      <a href="pdf/map/DB_NEW_MAP.pdf">
+         <h2 class="contact-text">
+        	<span class="orange">download map:</span><br />map with directions
+         </h2></a>
+
+       
+            <hr />
+          
+          <h1>social networking</h1>
+
+        <a href="http://twitter.com/thedesignbank">
+        <h2 class="contact-text"> 
+        <span class="orange">twitter - follow us</span>
+        <br />@thedesignbank.co.uk</h2></a>
+
+      <a href="http://www.facebook.com/pages/Huddersfield-United-Kingdom/The-Design-Bank/308854504273?ref=ts">
+      <h2 class="contact-text">
+          <span class="orange">facebook - add us</span><br />
+          The design bank </h2></a>
+          
+          <hr />
+  
+
+      
+
+
+
+ <!--<p>Nam viverra nisi non pulvinar tempus. Nunc et nunc eleifend, fringilla dolor mollis, feugiat lectus. Donec eros enim, porta eget justo ac, rhoncus pulvinar ipsum. Nam a eros a lectus venenatis pretium egestas quis neque. Mauris rutrum consectetur nibh, eget hendrerit sem lacinia ut. Pellentesque ornare luctus diam in dapibus. Suspendisse a erat vel metus cursus pellentesque et eu libero. Nulla facilisi. Aenean sed odio eget ligula porttitor cursus. Aliquam erat volutpat. Suspendisse dignissim nulla ipsum, quis eleifend leo pulvinar a. Etiam sagittis lectus et elit fringilla, feugiat rutrum felis convallis. Aenean adipiscing mi a neque accumsan, id eleifend lacus ultrices. </p>-->
+ </div>
+
+
+   </div>
+   </div>
+            <footer id="footer" class="footer">
+      
+      <div class="container">
+            <div class="row-fluid">
+                <div class="col-xs-6 col-sm-3">
+                    <h3 class="db">The Design Bank</h3>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc at nulla gravida, ultricies mi at, tincidunt tellus. Mauris non neque leo. Duis dapibus faucibus laoreet. In ultrices scelerisque lobortis.  </p>
+                    <!--<ul class="studios clearfix"><li class="first"><a href="#">New Business</a></li>
+<li><a href="#l">Careers</a></li>
+<li><a href="#">Media</a></li>
+<li class="last"><a href="#">Internships</a></li>
+</ul>   -->             </div>
+                <div class="col-xs-6 col-sm-3">
+                    <h3>Our Expertise</h3>
+                    <ul class="studios clearfix"><li class="first"><a href="#">our work</a></li>
+<li><a href="#">design</a></li>
+<li><a href="#">online</a></li>
+<li><a href="#">seo</a></li>
+<li><a href="#">pr</a></li>
+<li><a href="#">advertising</a></li>
+<li><a href="#">news</a></li>
+<li class="last"><a href="contact.html">contact</a></li>
+</ul>                
+
+</div>
+                <div class="col-xs-6 col-sm-3">
+                    <h3 id="boo">Finding Us</h3>
+                    <ul class="studios clearfix" id="boo">
+<li><p>Download Map<br /><a href="http://www.thedesignbank.co.uk/pdf/map/DB_NEW_MAP.pdf">Map with Directions</a></p></li>
+<li><p>Google Map<br /><a href="#">Find us using Google</a></p>/li>
+</ul>          
+</div>
+
+
+<div class="col-xs-6 col-sm-3">
+
+<h3>Address:</h3>
+<p class="address">The Design Bank<br />
+Headrow House,<br />
+19 Old Leeds Road,<br />
+Huddersfield,<br />
+HD1 1SG</p>
+
+<ul class="social">
+
+<li class="twitter"><a href="https://twitter.com/thedesignbank"><img src="img/foot-twit.png" alt="" /></a></li>
+                            <li class="facebook"><a href="http://www.facebook.com/pages/The-Design-Bank/"><img src="img/foot-face.png" alt="" /></a></li>                                     </ul>
+
+</div>
+
+                <!--<div class="clearfix">&nbsp;</div>-->
+            </div>
+             
+            <p class="legal">&copy; 2014 design bank. All Rights Reserved. <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a></p>
+              </div>         
+            </footer>
+
+   <!-- /container -->
+
+      <!--<hr>
+
+      <h3>Column clearing</h3>
+      <p><a href="http://getbootstrap.com/css/#grid-responsive-resets">Clear floats</a> at specific breakpoints to prevent awkward wrapping with uneven content.</p>
+      <div class="row">
+        <div class="col-xs-6 col-sm-3">
+          .col-xs-6 .col-sm-3
+          <br>
+          Resize your viewport or check it out on your phone for an example.
+        </div>
+        <div class="col-xs-6 col-sm-3">.col-xs-6 .col-sm-3</div>-->
+
+        <!-- Add the extra clearfix for only the required viewport -->
+        <!--<div class="clearfix visible-xs"></div>
+
+        <div class="col-xs-6 col-sm-3">.col-xs-6 .col-sm-3</div>
+        <div class="col-xs-6 col-sm-3">.col-xs-6 .col-sm-3</div>
+      </div>
+
+      <hr>
+
+      <h3>Offset, push, and pull resets</h3>
+      <p>Reset offsets, pushes, and pulls at specific breakpoints.</p>
+      <div class="row">
+        <div class="col-sm-5 col-md-6">.col-sm-5 .col-md-6</div>
+        <div class="col-sm-5 col-sm-offset-2 col-md-6 col-md-offset-0">.col-sm-5 .col-sm-offset-2 .col-md-6 .col-md-offset-0</div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 col-md-5 col-lg-6">.col-sm-6 .col-md-5 .col-lg-6</div>
+        <div class="col-sm-6 col-md-5 col-md-offset-2 col-lg-6 col-lg-offset-0">.col-sm-6 .col-md-5 .col-md-offset-2 .col-lg-6 .col-lg-offset-0</div>
+      </div>-->
+
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
+
+
